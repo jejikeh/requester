@@ -5,13 +5,17 @@ import (
 	"strings"
 )
 
-func NewHttpClient() *http.Client {
-	return &http.Client{}
+type Client struct {
+	httpClient *http.Client
 }
 
-func MakeRequest(t *Task) (*http.Response, error) {
-	client := NewHttpClient()
+func NewClient() *Client {
+	return &Client{
+		httpClient: &http.Client{},
+	}
+}
 
+func (c *Client) MakeRequest(t *Task) (*http.Response, error) {
 	req, err := http.NewRequest(t.Method, t.URL, strings.NewReader(t.Body))
 
 	for k, v := range t.RequestHeaders {
@@ -22,7 +26,7 @@ func MakeRequest(t *Task) (*http.Response, error) {
 		return nil, err
 	}
 
-	resp, err := client.Do(req)
+	resp, err := c.httpClient.Do(req)
 
 	if err != nil {
 		return nil, err

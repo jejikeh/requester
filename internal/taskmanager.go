@@ -17,16 +17,18 @@ type TaskManager interface {
 }
 
 type InMemoryTaskManager struct {
-	tasks map[string]*Task
+	tasks  map[string]*Task
+	client *Client
 
 	mutex sync.Mutex
 	wg    *sync.WaitGroup
 }
 
-func NewInMemoryTaskManager() *InMemoryTaskManager {
+func NewInMemoryTaskManager(client *Client) *InMemoryTaskManager {
 	return &InMemoryTaskManager{
-		tasks: make(map[string]*Task),
-		wg:    &sync.WaitGroup{},
+		tasks:  make(map[string]*Task),
+		wg:     &sync.WaitGroup{},
+		client: client,
 	}
 }
 
@@ -79,7 +81,7 @@ func (t *InMemoryTaskManager) GetTask(ctx context.Context, id string) (*Task, er
 func (t *InMemoryTaskManager) processTask(task *Task) error {
 	task.Status = TaskStatusRunning
 
-	resp, err := MakeRequest(task)
+	resp, err := t.client.MakeRequest(task)
 
 	if err != nil {
 		task.Status = TaskStatusError
