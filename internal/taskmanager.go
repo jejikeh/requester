@@ -21,15 +21,15 @@ type InMemoryTaskManager struct {
 	tasks  map[string]*Task
 	client *Client
 
-	mutex sync.Mutex
-	wg    *sync.WaitGroup
+	mutex     sync.Mutex
+	waitGroup *sync.WaitGroup
 }
 
 func NewInMemoryTaskManager(client *Client) *InMemoryTaskManager {
 	return &InMemoryTaskManager{
-		tasks:  make(map[string]*Task),
-		wg:     &sync.WaitGroup{},
-		client: client,
+		tasks:     make(map[string]*Task),
+		waitGroup: &sync.WaitGroup{},
+		client:    client,
 	}
 }
 
@@ -37,9 +37,9 @@ func (t *InMemoryTaskManager) CreateTask(ctx context.Context, req CreateTaskRequ
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
 
-	log.Printf("Creating task with %s %s", req.Method, req.URL)
-
 	id := uuid.New().String()
+
+	log.Printf("Creating task %s with %s %s", id, req.Method, req.URL)
 
 	task := Task{
 		ID:              id,
@@ -53,11 +53,11 @@ func (t *InMemoryTaskManager) CreateTask(ctx context.Context, req CreateTaskRequ
 
 	t.tasks[id] = &task
 
-	if t.wg != nil {
-		t.wg.Add(1)
+	if t.waitGroup != nil {
+		t.waitGroup.Add(1)
 
 		go func() {
-			defer t.wg.Done()
+			defer t.waitGroup.Done()
 
 			err := t.processTask(t.tasks[id])
 
@@ -84,7 +84,7 @@ func (t *InMemoryTaskManager) GetTask(ctx context.Context, id string) (*Task, er
 func (t *InMemoryTaskManager) processTask(task *Task) error {
 	task.Status = TaskStatusRunning
 
-	resp, err := t.client.MakeRequest(task)
+	response, err := t.client.MakeRequest(task)
 
 	if err != nil {
 		task.Status = TaskStatusError
@@ -93,11 +93,11 @@ func (t *InMemoryTaskManager) processTask(task *Task) error {
 		return err
 	}
 
-	defer resp.Body.Close()
+	defer response.Body.Close()
 
 	task.Status = TaskStatusDone
 
-	bodyBytes, err := io.ReadAll(resp.Body)
+	bodyBytes, err := io.ReadAll(response.Body)
 
 	if err != nil {
 		return err
@@ -105,7 +105,7 @@ func (t *InMemoryTaskManager) processTask(task *Task) error {
 
 	task.Body = string(bodyBytes)
 
-	for k, v := range resp.Header {
+	for k, v := range response.Header {
 		task.ResponseHeaders[k] = v[0]
 	}
 
