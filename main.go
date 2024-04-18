@@ -11,6 +11,7 @@ import (
 
 func main() {
 	client := internal.NewClient()
+
 	taskManager := internal.NewInMemoryTaskManager(client)
 
 	router := routers.NewRouter(taskManager)
