@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"log"
 	"sync"
 
 	"github.com/google/uuid"
@@ -35,6 +36,8 @@ func NewInMemoryTaskManager(client *Client) *InMemoryTaskManager {
 func (t *InMemoryTaskManager) CreateTask(ctx context.Context, req CreateTaskRequest) (string, error) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
+
+	log.Printf("Creating task with %s %s", req.Method, req.URL)
 
 	id := uuid.New().String()
 
@@ -107,6 +110,8 @@ func (t *InMemoryTaskManager) processTask(task *Task) error {
 	}
 
 	task.Status = TaskStatusDone
+
+	log.Printf("Task %s done", task.ID)
 
 	return nil
 }

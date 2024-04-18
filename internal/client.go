@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"log"
 	"net/http"
 	"strings"
 )
@@ -16,6 +17,8 @@ func NewClient() *Client {
 }
 
 func (c *Client) MakeRequest(t *Task) (*http.Response, error) {
+	log.Printf("Requesting %s %s", t.Method, t.URL)
+
 	req, err := http.NewRequest(t.Method, t.URL, strings.NewReader(t.Body))
 
 	for k, v := range t.RequestHeaders {
